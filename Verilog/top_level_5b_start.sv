@@ -36,16 +36,48 @@ module top_level_5b(
        .data_in(),.data_out());                   // instantiate data memory
 
 // 6 parallel LFSRs -- fill in the missing connections
-  lfsr6b l0(.clk() , 
-         .en   ()  ,            // 1: advance LFSR on rising clk
-         .init (),	            // 1: initialize LFSR
-         .taps (6'h21)     ,    // tap pattern 0
-         .start() ,	            // starting state for LFSR
-         .state(LFSR_state[0]));		   // LFSR state = LFSR output 
+  lfsr6b l0(.clk(), 
+          .en   (1),            // 1: advance LFSR on rising clk
+          .init (1),	            // 1: initialize LFSR
+          .taps (6'h21),    // tap pattern 0
+          .start(),	            // starting state for LFSR --> What should this be?
+          .state(LFSR_state[0]));		   // LFSR state = LFSR output 
 
-  lfsr6b l1(... .taps(6'h2D),   .state(LFSR_state[1])
-/* fill in the guts: continue with other 5 lfsr6b
+  lfsr6b l1(.clk(),
+          .en   (1),
+          .init (1),      // --> fill in missing connections
+          .taps (6'h2D),
+          .start(),
+          .state(LFSR_state[1]));
+/* fill in the guts: continue with other 5 lfsr6b --> complete other lfsr connections
 */
+  lfsr6b l2(.clk(),
+          .en   (1),
+          .init (1),
+          .taps (6'h30),
+          .start(),
+          .state(LFSR_state[2]));
+
+  lfsr6b l3(.clk(),
+          .en   (1),
+          .init (1),
+          .taps (6'h33),
+          .start(),
+          .state(LFSR_state[3]));
+
+  lfsr6b l4(.clk(),
+          .en   (1),
+          .init (1),
+          .taps (6'h36),
+          .start(),
+          .state(LFSR_state[4]));
+
+  lfsr6b l5(.clk(),
+          .en   (1),
+          .init (1),
+          .taps (6'h39),
+          .start(),
+          .state(LFSR_state[5]));
 
 
 /* We need to advance the LFSR(s) once per clock cycle. 
@@ -58,6 +90,7 @@ per clock cycle.
   always_comb case(match)
     6'b10_0000: foundit = 'd5;	    // because bit [5] was set
     // fill in the guts
+    
 	default: foundit = 0;           // covers bit[0] match and no match cases
   endcase
 
