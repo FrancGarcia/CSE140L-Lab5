@@ -5,11 +5,11 @@ module top_level_5b(
   output logic   done);
 
 // memory interface
-  logic          wr_en;
-  logic    [7:0] raddr, 
-                 waddr,
-                 data_in;
-  logic    [7:0] data_out;             
+  logic          wr_en;       // data memory write enable 
+  logic    [7:0] raddr,       // read address pointer
+                 waddr,       // write address pointer
+                 data_in;     // to dat_mem
+  logic    [7:0] data_out;   // from dat_mem          
 
 // program counter
   logic[15:0] cycle_ct = 0;
@@ -69,7 +69,7 @@ module top_level_5b(
           .en   (LFSR_en),
           .init (load_LFSR),
           .taps (6'h36),
-          .start(data_out[5:0]^ 6'h1F),
+          .start(data_out[5:0]^ 6'h1F),  
           .state(LFSR_state[4]));
 
   lfsr6b l5(.clk(clk),
@@ -77,7 +77,7 @@ module top_level_5b(
           .init (load_LFSR),
           .taps (6'h39),
           .start(data_out[5:0]^ 6'h1F),
-          .state(LFSR_state[5]));
+          .state(LFSR_state[5])); 
 
 
 /* We need to advance the LFSR(s) once per clock cycle. 
@@ -107,9 +107,9 @@ per clock cycle.
       cycle_ct <= cycle_ct + 1;
 	  if(cycle_ct == 8) begin			// This is just for when preamble is length 7 (7 underscores)
       for(i=0; i<6; i++) begin
-	      match[i] <= ;				// which LFSR state conforms to our test bench LFSR? 
+	      match[i] <= dm1.data_out[64+i][5:0]^6'h1f;		// which LFSR state conforms to our test bench LFSR? 
       end
-    end else begin // New check for when cycle_ct > 8
+    end else begin // New check for when cycle_ct > 8  --> Advised to us by other TA
         // figure out when preamble ends --> XOR with LFSR state --> if matches with underscore, still preamble, keep going until we no longer OUTPUT underscore.
       end
     end
@@ -122,8 +122,8 @@ per clock cycle.
 	  wr_en     = 'b0;
   case(cycle_ct)
 	0: begin 
-        raddr     = ;   // starting address for encrypted data to be loaded into device
-		    waddr     = ;   // starting address for storing decrypted results into data mem
+        raddr     = 'd64;   // starting address for encrypted data to be loaded into device
+		    waddr     = 'd61;   // starting address for storing decrypted results into data mem
 	     end		       // no op
 	1: begin 
         load_LFSR = ;	  // initialize the 6 LFSRs
@@ -141,7 +141,7 @@ per clock cycle.
 		     waddr = ;
 		 end
 	72  : begin
-          done = ;		// send acknowledge back to test bench to halt simulation
+          done = 1;		// send acknowledge back to test bench to halt simulation 
  		      raddr =	;
  		      waddr = ; 
 	     end
