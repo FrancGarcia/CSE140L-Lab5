@@ -33,7 +33,7 @@ module top_level_5b(
 
 // instantiate submodules
 // data memory -- fill in the connections
-  dat_mem dm1(.clk(clk),.write_en(write_en),.raddr(raddr),.waddr(waddr),
+  dat_mem dm1(.clk(clk),.write_en(wr_en),.raddr(raddr),.waddr(waddr),
        .data_in(data_in),.data_out(data_out));                   // instantiate data memory
 
 // 6 parallel LFSRs -- fill in the missing connections
@@ -132,7 +132,7 @@ per clock cycle.
 	     end		       // no op
 	1: begin 
         load_LFSR = 'd1;	  // initialize the 6 LFSRs
-        raddr     = 'd64; 
+        raddr     = 'd64;
 		    waddr     = 'd0;
        end		       // no op
 	2  : begin				   
@@ -141,7 +141,7 @@ per clock cycle.
 		      waddr     = 'd0;
          end
 	3  : begin			       // training seq.	-- run LFSRs & advance raddr
-	       LFSR_en = 1;
+	       LFSR_en = 'd1;
 		     raddr = 'd64 + cycle_ct - 2;		  // advance raddr
 		     waddr = 'd0;
 		 end
@@ -153,16 +153,18 @@ per clock cycle.
 	default: begin	         // covers cycle_ct 4-71
 	         LFSR_en = 'd1;
            raddr = 'd64 + cycle_ct - 2;
+           
            if(cycle_ct > 8) begin   // turn on write enable
 			      wr_en = 'd1;
-			 if(cycle_ct > 9)		 // advance memory write address pointer
-			   waddr = waddr + 1;
+			 
+       if(cycle_ct > 9)		 // advance memory write address pointer
+			   waddr = cycle_ct - 9;
 		   end
 		   else begin
 		     waddr = 'd0;
 			   wr_en = 0;
 		   end
-//		   data_in = data_out^LFSR_state[foundit];
+		   data_in = data_out^{2'b0,LFSR_state[foundit]};
 	     end
   endcase
 end
@@ -178,6 +180,7 @@ end
           lfsr_trial[3][0] = dm1.core[64][5:0]^6'h1f;
           lfsr_trial[4][0] = dm1.core[64][5:0]^6'h1f;
           lfsr_trial[5][0] = dm1.core[64][5:0]^6'h1f;
+
 //          $display("trial 0 = %h",lfsr_trial[0][0]);
           for(int kl=0;kl<6;kl++) begin :trial_loop
             lfsr_trial[0][kl+1] = (lfsr_trial[0][kl]<<1)+(^(lfsr_trial[0][kl]&LFSR_ptrn[0]));   
