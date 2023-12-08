@@ -13,6 +13,7 @@ module top_level_5b(
 
 // program counter
   logic[15:0] cycle_ct = 0;
+  logic[   7:0] ct_inc;          // prog count step (default = +1) Added
 
 // LFSR interface
   logic load_LFSR,
@@ -104,64 +105,61 @@ per clock cycle.
 	    match    <= 'b0;
 	  end
     else begin
-      cycle_ct <= cycle_ct + 1;
+      cycle_ct <= cycle_ct + ct_inc;
 	  if(cycle_ct == 8) begin			// This is just for when preamble is length 7 (7 underscores)
-      
       for(i=0; i<6; i++) begin
-        if(data_out ^ {2'b0,LFSR_state[i]} == 8'h5F) begin
-          match[i] <= 1;
-        end
-        else begin
-          match[i] <= 0;
-        end
-	      //match[i] <= ;		// which LFSR state conforms to our test bench LFSR? 
+        match[i] <= ((data_out ^ {2'b0,LFSR_state[i]}) == 8'h5F); // which LFSR state conforms to our test bench LFSR? 
       end
-    end else begin // New check for when cycle_ct > 8  --> Advised to us by other TA
-        // figure out when preamble ends --> XOR with LFSR state --> if matches with underscore, still preamble, keep going until we no longer OUTPUT underscore.
-      end
+      //end
+      // else 
+      // begin // New check for when cycle_ct > 8  --> Advised to us by other TA
+      // figure out when preamble ends --> XOR with LFSR state --> if matches with underscore, still preamble, keep going until we no longer OUTPUT underscore.
+      // end
     end
   end  
-
+  end
+  
   always_comb begin 
 //defaults
     load_LFSR = 'b0; 
     LFSR_en   = 'b0;   
 	  wr_en     = 'b0;
+    ct_inc    = 'b1; //Added
   case(cycle_ct)
 	0: begin 
         raddr     = 'd64;   // starting address for encrypted data to be loaded into device
 		    waddr     = 'd0;   // starting address for storing decrypted results into data mem
 	     end		       // no op
 	1: begin 
-        load_LFSR = ;	  // initialize the 6 LFSRs
-        raddr     = raddr + 1;
-		    waddr     = ;
+        load_LFSR = 'd1;	  // initialize the 6 LFSRs
+        raddr     = 'd64; 
+		    waddr     = 'd0;
        end		       // no op
 	2  : begin				   
-          LFSR_en   = 1;	   // advance the 6 LFSRs     
-          raddr     = raddr + 1;
+          LFSR_en   = 'd1;	   // advance the 6 LFSRs     
+          raddr     = 'd64;
 		      waddr     = 'd0;
          end
 	3  : begin			       // training seq.	-- run LFSRs & advance raddr
 	       LFSR_en = 1;
-		     raddr = raddr + 1;			  // advance raddr
+		     raddr = 'd64 + cycle_ct - 2;		  // advance raddr
 		     waddr = 'd0;
 		 end
 	72  : begin
-          done = 1;		// send acknowledge back to test bench to halt simulation 
- 		      raddr =	raddr + 1;
- 		      waddr = d'0;; 
+          done = 'd1;		// send acknowledge back to test bench to halt simulation 
+ 		      raddr =	'd64 + cycle_ct - 2;
+ 		      waddr = 'd0; 
 	     end
 	default: begin	         // covers cycle_ct 4-71
-	       LFSR_en = 1;
-           raddr ; 
-           if(cycle_ct>) begin   // turn on write enable
-			      wr_en = 1;
-			 if(cycle_ct>)		 // advance memory write address pointer
-			   waddr = ;
+	         LFSR_en = 'd1;
+           raddr = 'd64 + cycle_ct - 2;
+           if(cycle_ct > 8) begin   // turn on write enable
+			      wr_en = 'd1;
+			 if(cycle_ct > 9)		 // advance memory write address pointer
+			   waddr = waddr + 1;
 		   end
 		   else begin
-		     waddr = ;
+		     waddr = 'd0;
 			   wr_en = 0;
 		   end
 //		   data_in = data_out^LFSR_state[foundit];
