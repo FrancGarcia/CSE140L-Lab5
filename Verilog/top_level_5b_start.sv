@@ -13,8 +13,9 @@ module top_level_5b(
 
 // program counter
   logic[15:0] cycle_ct = 0;
-  logic[   7:0] ct_inc;          // prog count step (default = +1) Added
-
+  logic[7:0] ct_inc;          // prog count step (default = +1) ADDED
+  logic[2:0] ct_add;   
+ 
 // LFSR interface
   logic load_LFSR,
         LFSR_en;
@@ -103,6 +104,7 @@ per clock cycle.
     if(init) begin
       cycle_ct <= 'b0;
 	    match    <= 'b0;
+      ct_add   <= 'b0;
 	  end
     else begin
       cycle_ct <= cycle_ct + ct_inc;
@@ -110,13 +112,14 @@ per clock cycle.
       for(i=0; i<6; i++) begin
         match[i] <= ((data_out ^ {2'b0,LFSR_state[i]}) == 8'h5F); // which LFSR state conforms to our test bench LFSR? 
       end
-      //end
-      // else 
-      // begin // New check for when cycle_ct > 8  --> Advised to us by other TA
-      // figure out when preamble ends --> XOR with LFSR state --> if matches with underscore, still preamble, keep going until we no longer OUTPUT underscore.
-      // end
+    end 
+    if(cycle_ct > 8 && (data_out^{2'b0,LFSR_state[foundit]}) == 8'h5F) begin
+      // New check for when cycle_ct > 8 
+      // figure out when preamble ends --> XOR with LFSR state --> if matches with
+      // underscore, still preamble, keep going until we no longer OUTPUT underscore.
+      ct_add <= ct_add + 1;
     end
-  end  
+    end
   end
   
   always_comb begin 
@@ -154,11 +157,11 @@ per clock cycle.
 	         LFSR_en = 'd1;
            raddr = 'd64 + cycle_ct - 2;
            
-           if(cycle_ct > 8) begin   // turn on write enable
+           if(cycle_ct > (8 + ct_add)) begin   // turn on write enable
 			      wr_en = 'd1;
 			 
-       if(cycle_ct > 9)		 // advance memory write address pointer
-			   waddr = cycle_ct - 9;
+       if(cycle_ct > (9 + ct_add))		 // advance memory write address pointer
+			   waddr = cycle_ct - (9 + ct_add);
 		   end
 		   else begin
 		     waddr = 'd0;
